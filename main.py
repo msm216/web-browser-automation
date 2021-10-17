@@ -7,8 +7,8 @@
 # 5. Der richtige Preis der beiden roten Mäuse und der Gesamtpreis sollen verifiziert werden.
 #############################################################################################
 
-import os
-import sys
+# import os
+# import sys
 import time
 
 from selenium import webdriver
@@ -80,8 +80,18 @@ def set_amount(n: int) -> None:
 
 # get what is required
 def get_goods(shopping_list: dict) -> None:
+    ############################################################################################
+    # The shopping list suppose to be a dictionary of product names and dictionaries of colours.
+    # Each colour contains amount and planed budget for single price. It looks like this:
+    # 'shopping_list': {
+    #     'HP Z3200 Wireless Mouse': {
+    #         'red': {'amount': 2, 'price': 29.99, },
+    #         'white': {'amount': 1, 'price': 29.99, },
+    #     },
+    # },
+    ############################################################################################
     # for required product(s)...
-    for product, context in shopping_list.items():
+    for product, content in shopping_list.items():
         # pick {product}
         print("Picking {0}...".format(product))
         target = driver.find_element_by_xpath(
@@ -90,7 +100,7 @@ def get_goods(shopping_list: dict) -> None:
         driver.execute_script('arguments[0].click()', target)
         time.sleep(3)
         # for required colour(s)...
-        for colour, amount_price in context.items():
+        for colour, amount_price in content.items():
             # pick {amount} {colour}
             print("Picking {1} {0}...".format(colour, amount_price['amount']))
             clr = driver.find_element_by_xpath(
@@ -116,9 +126,9 @@ def verify_cart(shopping_list: dict, **kwargs) -> bool:
     # calculate total budget
     total_budget = 0
     for product in shopping_list.keys():
-        for color, context in shopping_list[product].items():
-            total_budget += int(context['amount']) * float(context['price'])
-    # verify the total sum ($179.94)
+        for content in shopping_list[product].values():
+            total_budget += int(content['amount']) * float(content['price'])
+    # verify the total sum ($89.97)
     total_sum = driver.find_element_by_xpath(
         "//div[@id='shoppingCart']/table[1]/tfoot[1]/tr[1]/td[2]/span[2]"
     ).text
@@ -128,19 +138,19 @@ def verify_cart(shopping_list: dict, **kwargs) -> bool:
 
     # calculate budget of certain product type
     if len(kwargs) != 0:
-        for product, color in kwargs.items():
+        for product, colour in kwargs.items():
             product_budget = 0
-            context = shopping_list[product][color.lower()]
-            product_budget += int(context['amount']) * float(context['price'])
-            # verify product sum
-            prod_sum = driver.find_element_by_xpath(
+            content = shopping_list[product][colour.lower()]
+            product_budget += int(content['amount']) * float(content['price'])
+            # verify product sum ($59.98 for 2 reds)
+            product_sum = driver.find_element_by_xpath(
                 """//div[@id='shoppingCart']/table[1]/tbody[1]/
                 tr[td[4]/span[1]/@title='{1}' and td[2]/label[1][contains(text(),'{0}')]]/
-                td[6]/p[1]""".format(product.upper(), color.upper())    # name in capital
+                td[6]/p[1]""".format(product.upper(), colour.upper())    # name in capital
             ).text
-            c = prod_sum == '$'+str(product_budget)
+            c = product_sum == '$'+str(product_budget)
             check_list.append(c)
-            print("Sum of {1} {0}: {2}, {3}".format(product, color, prod_sum, c))
+            print("Sum of {1} {0}: {2}, {3}".format(product, colour, product_sum, c))
     else:
         pass
     # witch purchase
@@ -175,7 +185,7 @@ if __name__ == '__main__':
     # Open website
     webdriver.FirefoxOptions().add_argument('--headless')
     driver = webdriver.Firefox()
-    driver.implicitly_wait(5)
+    driver.implicitly_wait(3)
     # driver.maximize_window()
     print("Opening browser...")
     driver.get(infos.get('url'))
