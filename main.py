@@ -38,6 +38,9 @@ infos = {
                 'red': {'amount': 2, 'price': 29.99, },
                 'white': {'amount': 1, 'price': 29.99, },
         },
+        'HP Z4000 Wireless Mouse': {
+                'blue': {'amount': 1, 'price': 9.99, },
+        },
     },
     # 'total_budget': '$89.97',
     # 'red_budget': '$59.98',
@@ -114,6 +117,8 @@ def get_goods(shopping_list: dict) -> None:
             driver.find_element_by_name('save_to_cart').click()
             print("Added to cart.")
             time.sleep(1)
+        driver.back()
+        time.sleep(3)
 
 
 # verify the shopping cart
@@ -128,11 +133,11 @@ def verify_cart(shopping_list: dict, **kwargs) -> bool:
     for product in shopping_list.keys():
         for content in shopping_list[product].values():
             total_budget += int(content['amount']) * float(content['price'])
-    # verify the total sum ($89.97)
+    # verify the total sum ($89.97 for HP Z3200 Wireless Mouse)
     total_sum = driver.find_element_by_xpath(
         "//div[@id='shoppingCart']/table[1]/tfoot[1]/tr[1]/td[2]/span[2]"
-    ).text
-    c = total_sum == '$'+str(total_budget)
+    ).text    # string
+    c = "OK" if (total_sum == '$'+str(total_budget)) is True else "Not OK"
     check_list.append(c)
     print("Sum of total: {0}, {1}".format(total_sum, c))
 
@@ -147,8 +152,8 @@ def verify_cart(shopping_list: dict, **kwargs) -> bool:
                 """//div[@id='shoppingCart']/table[1]/tbody[1]/
                 tr[td[4]/span[1]/@title='{1}' and td[2]/label[1][contains(text(),'{0}')]]/
                 td[6]/p[1]""".format(product.upper(), colour.upper())    # name in capital
-            ).text
-            c = product_sum == '$'+str(product_budget)
+            ).text    # string
+            c = "OK" if (product_sum == '$'+str(product_budget)) is True else "Not OK"
             check_list.append(c)
             print("Sum of {1} {0}: {2}, {3}".format(product, colour, product_sum, c))
     else:
@@ -220,6 +225,7 @@ if __name__ == '__main__':
     # verify the prises
     d = {
         'HP Z3200 Wireless Mouse': 'red',
+        'HP Z4000 Wireless Mouse': 'blue',
     }
     purchase = verify_cart(infos.get('shopping_list'), **d)
     time.sleep(1)
@@ -256,8 +262,12 @@ if __name__ == '__main__':
             "a[class='roboto-medium float-button a-link linkToPress ng-scope']"
         ).click()
         time.sleep(1)
+    except NoSuchElementException:
+        time.sleep(3)
+        print("Page SHIPPING DETAILS' skipped")
+        pass
     except ElementNotInteractableException:
-        # time.sleep(3)
+        time.sleep(3)
         print("Page SHIPPING DETAILS' skipped")
         pass
 
